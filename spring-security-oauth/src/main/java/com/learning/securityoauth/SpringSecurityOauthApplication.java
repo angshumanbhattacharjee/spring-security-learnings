@@ -8,10 +8,12 @@ import org.springframework.security.config.annotation.web.configuration.WebSecur
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
+import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 
 @SpringBootApplication
@@ -28,11 +30,18 @@ public class SpringSecurityOauthApplication extends WebSecurityConfigurerAdapter
 		)
 		.exceptionHandling(e -> e.authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
 		.oauth2Login();
+
+		http.logout(l -> l.logoutSuccessUrl("/").permitAll());
+		http.csrf(c -> c.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse()));
 	}
 
 	@GetMapping("/user")
 	public Map<String, Object> user(@AuthenticationPrincipal OAuth2User principal) {
-		return Collections.singletonMap("name", principal.getAttribute("name"));
+		System.out.println(principal.toString());
+		Map<String, Object> map = new HashMap<>();
+		map.put("name", principal.getAttribute("name"));
+		map.put("repo", principal.getAttribute("public_repos"));
+		return map;
 	}
 
 	public static void main(String[] args) {
